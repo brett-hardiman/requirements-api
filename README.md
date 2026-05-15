@@ -4,19 +4,21 @@
 [![FastAPI](https://img.shields.io/badge/Built%20With-FastAPI-009688)](https://fastapi.tiangolo.com)
 [![Powered By](https://img.shields.io/badge/Powered%20By-Claude%20Sonnet-1DB954)](https://anthropic.com)
 
-A FastAPI backend that accepts a plain-text project description and returns structured user stories with acceptance criteria — powered by the Anthropic Claude API.
+---
+
+## What It Is
+
+A FastAPI backend that turns plain-English project descriptions into structured Agile user stories. You send a few sentences describing what you want to build, and the API returns a set of user stories in standard format (As a... I want... So that...), each with acceptance criteria. It's powered by Claude, Anthropic's large language model.
 
 ---
 
-## What It Does
+## How It Works
 
-Send a plain-English project description to a single POST endpoint. Get back a structured JSON payload containing a project summary and a set of user stories in standard Agile format (As a... I want... So that...), each with acceptance criteria.
-
-This is the API version of a requirements authoring workflow previously done manually or through standalone scripts.
+You send a POST request with a project description and an optional number of stories you want. The API wraps your input in a structured prompt and sends it to Claude Sonnet 4. Claude analyzes the description and generates user stories based on the project's complexity — it may return fewer stories than requested if the project is simple. The response is parsed, validated against a strict schema, and returned as JSON.
 
 ---
 
-## Endpoints
+## API Endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -26,66 +28,39 @@ This is the API version of a requirements authoring workflow previously done man
 
 ---
 
-## Request & Response
+## Example Request & Response
 
 **POST `/generate-requirements`**
 
 Request body:
 ```json
 {
-  "project_description": "A web app that lets project managers upload a technical doc and get draft user stories back.",
+  "project_description": "A mobile app that lets users track their daily water intake and sends reminders to stay hydrated.",
   "num_stories": 5
 }
 ```
 
-`num_stories` is optional and defaults to 5.
+`num_stories` is optional and defaults to 5. The API treats this as a maximum — it may return fewer stories for simple projects.
 
-Response:
+Response (truncated to one story for brevity):
 ```json
 {
-  "project_summary": "A document upload tool that auto-generates Agile user stories from technical specifications.",
+  "project_summary": "A hydration tracking mobile application with reminder functionality.",
   "user_stories": [
     {
-      "title": "Upload Technical Document",
-      "as_a": "project manager",
-      "i_want": "to upload a technical specification document",
-      "so_that": "the system can analyze it and generate draft user stories automatically",
+      "title": "Log Water Intake",
+      "as_a": "health-conscious user",
+      "i_want": "to log each glass of water I drink",
+      "so_that": "I can track my daily hydration progress",
       "acceptance_criteria": [
-        "User can upload a PDF or plain text file up to 10MB",
-        "System acknowledges successful upload with a confirmation message",
-        "Unsupported file types return a clear error message"
+        "User can add a water entry with one tap",
+        "Entry records timestamp and amount in ml or oz",
+        "Daily total updates immediately after logging"
       ]
     }
   ]
 }
 ```
-
----
-
-## Project Structure
-
-```
-requirements-api/
-├── main.py              # Entire API — routes, models, logic
-├── requirements.txt     # Python dependencies (4 packages)
-├── .env                 # Local only — NEVER commit this
-├── .env.example         # Committed placeholder — documents required vars
-├── .gitignore           # Excludes .env and __pycache__
-├── README.md            # This file
-└── CLAUDE.md            # Conventions for AI-assisted development
-```
-
----
-
-## Tech Stack
-
-| Technology | Role |
-|------------|------|
-| Python 3.11+ | Language |
-| FastAPI | Web framework + automatic API docs |
-| Pydantic | Request/response validation |
-| Uvicorn | ASGI server |
-| Anthropic Python SDK | Claude API client |
 
 ---
 
@@ -115,38 +90,62 @@ uvicorn main:app --reload
 
 **5. Test it**
 
-Open `http://localhost:8000/docs` in your browser. FastAPI generates interactive Swagger UI automatically — no Postman required.
+Open `http://localhost:8000/docs` in your browser. FastAPI generates interactive Swagger UI automatically.
 
 ---
 
-## Environment Variables
+## Configuration
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | Yes | Your Anthropic API key from console.anthropic.com |
+| `ANTHROPIC_API_KEY` | Yes | Your Anthropic API key. Get one at [console.anthropic.com](https://console.anthropic.com/) |
 
-Never commit your `.env` file. The `.gitignore` excludes it by default.
-
----
-
-## Key Concepts Demonstrated
-
-- **FastAPI routing** — `@app.post()` decorator maps a URL to a Python function
-- **Pydantic models** — typed request/response schemas with auto-validation
-- **Structured LLM output** — prompting Claude to return only JSON, then parsing and validating it
-- **Environment variable management** — API keys via `.env`, never hardcoded
-- **HTTP error handling** — `HTTPException` for graceful failure responses
-- **Auto-documentation** — Swagger UI generated at `/docs` with zero extra code
+The `.env` file is excluded from version control by default. Never commit it.
 
 ---
 
-## What's Next
+## Project Status & Roadmap
 
-Planned extensions for v2:
-- `GET /requirements/{id}` — retrieve previously generated stories (requires a database)
-- `POST /upload` — accept a PDF or `.txt` file as input instead of raw text
-- API key authentication on the endpoint itself
+**Current Status:** v1 complete (local-only deployment)
+
+Phase 1 is finished: the API generates intelligent user stories and logs all key events for debugging.
+
+**Planned for v2:**
 - Deploy to Railway or Render (free tier)
+- Add API key authentication for public endpoints
+- Add PDF upload endpoint — extract text from documents and generate stories from them
+- Add rate limiting to prevent abuse
+- Add automated test suite (pytest)
+
+---
+
+## Project Layout
+
+```
+requirements-api/
+├── main.py              # Entire API — routes, models, Claude API calls
+├── requirements.txt     # Python dependencies (fastapi, uvicorn, anthropic, pydantic)
+├── .env                 # Local secrets — NEVER commit this
+├── .env.example         # Placeholder for required environment variables
+├── .gitignore           # Excludes .env and __pycache__
+├── README.md            # This file
+├── CLAUDE.md            # Development conventions (for contributors)
+└── docs/                # Project plan and task logs
+```
+
+All application code lives in `main.py`. This is a deliberate v1 constraint: single-file API with no database.
+
+---
+
+## Tech Stack
+
+| Technology | Role | Why It Was Chosen |
+|------------|------|-------------------|
+| Python 3.11+ | Language | Modern type hints and async support |
+| FastAPI | Web framework | Auto-generated API docs, async-ready, built-in validation |
+| Pydantic v2 | Request/response validation | Strict schema enforcement with helpful error messages |
+| Uvicorn | ASGI server | Production-ready server for FastAPI |
+| Anthropic Python SDK | Claude API client | Official client for Claude, handles authentication and retries |
 
 ---
 

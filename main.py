@@ -62,9 +62,9 @@ Respond ONLY with a valid JSON object in this exact format, no markdown, no extr
 }}
 """
 
-    logger.info("Calling Claude API with model=claude-sonnet-4-20250514")
+    logger.info("Calling Claude API with model=claude-sonnet-4-6")
     message = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model="claude-sonnet-4-6",
         max_tokens=2048,
         messages=[{"role": "user", "content": prompt}]
     )

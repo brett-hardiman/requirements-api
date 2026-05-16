@@ -26,7 +26,7 @@ This is a FastAPI backend that wraps the Anthropic Claude API to generate struct
 - **Model naming:** PascalCase for Pydantic models (e.g. `RequirementsRequest`, `UserStory`)
 - **Endpoint naming:** kebab-case URL paths (e.g. `/generate-requirements`)
 - **Error handling:** Always use `HTTPException` with descriptive `detail` messages — never let raw exceptions surface to the caller
-- **Claude model:** Always use `claude-sonnet-4-20250514` unless explicitly updated in this file
+- **Claude model:** Always use `claude-sonnet-4-6` unless explicitly updated in this file
 
 ---
 
